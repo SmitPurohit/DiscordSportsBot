@@ -1,33 +1,61 @@
-#Reads from an xml site and uses Discord API to create a bot that gives the 
-#next upcoming game/score of a finished game of a requested team
 #Currently Working on making code look better
-#Next up is if !game is called when a game is going on
+#Next up is if !game is called when a game is going on - needs to be tested on Sunday
+#Next should be automatic score updating for Da Bears
 import bs4 as bs
 import urllib.request
 import discord
 import xml.etree.ElementTree as ET
 from discord.utils import get
-TOKEN = 'NjE5NzE4Mjc0MDQ0OTE5ODI5.XXMUKg.W43mgrOQp45VI1OAK1oZOYMvKNI'
 
+#initiliazes Discord API
+TOKEN = '[insert Discord API token here]'
 client = discord.Client()
 
+#Reads the xml file found at the link
 url = "http://www.nfl.com/liveupdate/scorestrip/ss.xml"
-
 source = urllib.request.urlopen(url).read()
 
+#Utilizes BS to find all 'g' (game) tags
 soup = bs.BeautifulSoup(source, 'lxml')
-
 root = soup.find_all('g')
+
+#Testing reading the file while the program is running
+#readFile() works as of now, still of to implement live scoring
+def readFile():
+    source = urllib.request.urlopen(url).read()
+
+    soup = bs.BeautifulSoup(source, 'lxml')
+
+    root = soup.find_all('g')
+
+#create variables location and opponent
 location = ""
 opponent = ""
+timeDiff = -1 #Time difference from Eastern Time (-1 is the default as it is Central Time)
+#getGameStats(team)
+#Input: The team name after the command !game in a Discord voice channel
+#Output: The message depending on the status of the game
+#
+#The different types of messages:
+#1:[team] won against/lost to [opponent] , (score)
+#2:[team] plays [opponent] (away/home) on Thursday, Sunday, Monday) at (time in Central Time)
+#3:[team] is losing to [opponent], (score)
 def getGameStats(team):
+    readFile() #reads the .xml file
+
+    #runs through each tag in the root directory
     for tag in root:
+        #sets 2 dictionaries: one for the home teams, one for the away teams 
+        homeDict = tag.attrs['hnn']
+        vDict = tag.attrs['vnn']
+        #if the team is found in the dictionaries
         if(homeDict == team or vDict == team):
+            #Sets variables gameStatus, vScore, and homeScore from the tag attributes in the file
             gameStatus = tag.attrs['q']
-            homeDict = tag.attrs['hnn']
-            vDict = tag.attrs['vnn']
-            vScore = tag.attrs['vs']
-            homeScore = tag.attrs['hs']            
+            vScore = tag.attrs['vs'] #Visiting team's score
+            homeScore = tag.attrs['hs']
+
+            #Sets the location, team and opponent score, and whether the requested team is the visitor or home team
             if(homeDict == team):
                 location = " at home"
                 opponent = vDict
@@ -38,20 +66,36 @@ def getGameStats(team):
                 opponent = homeDict
                 teamScore = (int)(vScore)
                 oppScore = (int)(homeScore)
+            #If the game status is pending (the game has not happened yet)
+            #Prints the 2nd message
             if(gameStatus == 'P'):
-                    hour = str((int)(tag.attrs['t'][0])-1)
+                    #gets the hour from the the first element of tag attribute t
+                    hour = str((int)(tag.attrs['t'][0])+timeDiff) #The hour of the game, subtracted by the time difference from Eastern Time
+                    #the hour is given in a string, hence the convergence from string to int back to string
+
+                    #Hours, like arrays start at 0, so if its 0, the time is actually 12
                     if(hour == "0"):
                         hour = "12"
+                    #gets the minute from the 2nd through 4th elements of tag attribute t
+                    #minute is a string
                     minute = str((int)(tag.attrs['t'][2:4]))
+                    #If the minute length is 1, it is a game at at hour (i.e. 12:00) so an extra zero is needed to get proper time
                     if(len(minute)==1):
                         minute += "0"
+                    
                     time = hour+":"+minute
+                    #Sets the day of the game
+                    #Day is given as Thu, Sun, or Mon
                     day = tag.attrs['d']
+                    #If the day is Thursday, since its given as Thu, a 'rs' is required before 'day'
                     if(day == 'Thu'):
                         day = day + 'rsday'
                     else:
                         day = day + 'day'
+                    #The completed message 2
                     return "The " + team.capitalize() + " play the " + opponent.capitalize() + location +  " on " + day + " at " + time
+            #If the game has finished
+            #Prints 1st message
             if(gameStatus == 'F'):
                     win = "tied"
                     if(teamScore > oppScore):
@@ -59,20 +103,31 @@ def getGameStats(team):
                     if(teamScore < oppScore):
                         win = " lost to "
                     return "The " + team.capitalize() + win + "the " + opponent.capitalize() + ", " + str(teamScore) + "-" + str(oppScore)
+            #Otherwise, the game is ongoing
+            #Prints 3rd message
             else:
+                status = " are tied to the "
+                if(teamScore>oppScore):
+                    status = " are winning against the "
+                if(teamScore<oppScore):
+                    status = " are losing to the "
+                return "The " + team.capitalize() + status + opponent.capitalize() + ", " + str(teamScore) + "-" + str(oppScore)
+            
+#The following is code specifically for the bot in Discord
 @client.event
+
+#When a message is sent in a Discord channel
 async def on_message(message):
     #We do not want the bot to reply to itself
     if message.author == client.user:
         return
+    #If the message starts with the command !game, send the string after !game (the team) to getGameStats
     if message.content.startswith('!game'):
 
         channel = message.channel
 
         await message.channel.send(getGameStats(message.content[6:]))
-    if message.content.startswith('!hello'):
-        msg = 'Hello {0.author.mention}'.format(message)
-        await message.channel.send(msg)
+    
 
 
 @client.event
@@ -82,7 +137,7 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('------')
-    #await client.get_channel(619719025219600428).send(game)
+    
 
 
 client.run(TOKEN)
