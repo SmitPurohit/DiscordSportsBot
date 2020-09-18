@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 from discord.utils import get
 
 #initiliazes Discord API
-TOKEN = 'NjE5NzE4Mjc0MDQ0OTE5ODI5.XYgDmQ.dM-_CqZiW-eZsNlA0BscUvBrSK0'
+TOKEN = 'insert pin here'
 client = discord.Client()
 
 #Reads the xml file found at the link
