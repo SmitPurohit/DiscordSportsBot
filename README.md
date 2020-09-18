@@ -17,7 +17,7 @@ The command for this bot is !game [team], where team is any NFL team.
 The bot will either return the score of the game of the current team if it is ongoing, the final score of the game, or when the requested 
 team is playing and who they are playing.
 
-This is still a work in progress, but is mostly functional. There is a small bug I recently started working on again.
+This is still a work in progress, but is mostly functional.
 My main planned additions to this program are more sports, the ability to "subscribe" and get notifications when the score changes for a team,
 and (way farther into the future) predicting the winner of the game (or possibly using another web scrape to get the predicted winner from sports analysts)
 
