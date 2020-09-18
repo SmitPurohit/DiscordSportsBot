@@ -2,30 +2,29 @@
 #Next up is if !game is called when a game is going on - needs to be tested on Sunday
 #Next should be automatic score updating for Da Bears
 import bs4 as bs
-import urllib.request
+import requests
 import discord
 import xml.etree.ElementTree as ET
 from discord.utils import get
 
 #initiliazes Discord API
-TOKEN = '[insert Discord API token here]'
+TOKEN = 'NjE5NzE4Mjc0MDQ0OTE5ODI5.XYgDmQ.dM-_CqZiW-eZsNlA0BscUvBrSK0'
 client = discord.Client()
 
 #Reads the xml file found at the link
-url = "http://www.nfl.com/liveupdate/scorestrip/ss.xml"
-source = urllib.request.urlopen(url).read()
-
+url = "https://static.nfl.com/liveupdate/scorestrip/ss.xml"
+session = requests.Session()
+headers = {'Connection': ''}
+r = session.get(url,headers = headers)
+source = r.text
 #Utilizes BS to find all 'g' (game) tags
-soup = bs.BeautifulSoup(source, 'lxml')
-root = soup.find_all('g')
-
+#soup = bs.BeautifulSoup(source, 'lxml')
+#root = soup.find_all('g')
+root = ''
 #Testing reading the file while the program is running
 #readFile() works as of now, still of to implement live scoring
 def readFile():
-    source = urllib.request.urlopen(url).read()
-
     soup = bs.BeautifulSoup(source, 'lxml')
-
     root = soup.find_all('g')
 
 #create variables location and opponent
@@ -41,7 +40,13 @@ timeDiff = -1 #Time difference from Eastern Time (-1 is the default as it is Cen
 #2:[team] plays [opponent] (away/home) on Thursday, Sunday, Monday) at (time in Central Time)
 #3:[team] is losing to [opponent], (score)
 def getGameStats(team):
-    readFile() #reads the .xml file
+    url = "https://static.nfl.com/liveupdate/scorestrip/ss.xml"
+    session = requests.Session()
+    headers = {'Connection': ''}
+    r = session.get(url,headers = headers)
+    source = r.text
+    soup = bs.BeautifulSoup(source, 'lxml')
+    root = soup.find_all('g')
 
     #runs through each tag in the root directory
     for tag in root:
@@ -106,12 +111,20 @@ def getGameStats(team):
             #Otherwise, the game is ongoing
             #Prints 3rd message
             else:
+                quarter = tag.attrs['q']
+                if(quarter == 'H'):
+                    endString = "at halftime."
+                else:
+                    timeLeft = tag.attrs['k']
+                    endings = ['st','nd','rd','th']
+                    quarter = quarter + endings[int(quarter)-1] + " quarter"
+                    endString = " with " + timeLeft + " left in the " + quarter
                 status = " are tied to the "
                 if(teamScore>oppScore):
                     status = " are winning against the "
                 if(teamScore<oppScore):
                     status = " are losing to the "
-                return "The " + team.capitalize() + status + opponent.capitalize() + ", " + str(teamScore) + "-" + str(oppScore)
+                return "The " + team.capitalize() + status + opponent.capitalize() + ", " + str(teamScore) + "-" + str(oppScore) + endString
             
 #The following is code specifically for the bot in Discord
 @client.event
