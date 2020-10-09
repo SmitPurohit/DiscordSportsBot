@@ -13,7 +13,7 @@ In order to use this bot/add this bot to a server, you need a Discord authorizat
    Replace CLIENTID with the CLIENTID found in "App Details"
 7) Run the discordbot.py file
 
-The command for this bot is !game [team], where team is any NFL team.
+The command for this bot is !game [team], where [team] is any NFL team. For example, !game bears.
 The bot will either return the score of the game of the current team if it is ongoing, the final score of the game, or when the requested 
 team is playing and who they are playing.
 
