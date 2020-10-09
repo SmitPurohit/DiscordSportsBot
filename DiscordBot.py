@@ -1,5 +1,4 @@
 #Currently Working on making code look better
-#Next up is if !game is called when a game is going on - needs to be tested on Sunday
 #Next should be automatic score updating for Da Bears
 import bs4 as bs
 import requests
