@@ -1,4 +1,4 @@
-# DiscordSportsBot
+# NFLScoresBot
 This is a bot written for Discord in Python that provides the current score/status of an NFL game.
 This program utilizes an xml file found on the NFL's website at http://static.nfl.com/liveupdate/scorestrip/ss.xml.
 It reads the xml file using the Beautiful Soup package.
